@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const Discord = require("discord.js");
 const bot = new Discord.Client();
 const TOKEN = process.env.TOKEN;
@@ -34,7 +35,11 @@ const playerScoreMap = {
   "185689334211543040": 2, // rosian
   "313717914442137601": 1, // koichi
   "185361242049740800": 1, // terumi
+  "185354573777600512": 2, // gifman
+  "275234068919222272": 1, // alkai
 };
+
+const playerBlackList = ["182825713437638656"]; // futaba
 
 tips = [
   "味方がキルやデスをしたらミニマップを一瞬だけ見る。どこで何が起きているかを把握することはとても大事。",
@@ -77,7 +82,18 @@ tips = [
   "歩きながら撃たない",
 ];
 
+const gozilineChannelId = "717095502470185030";
+const gozilineRequestChanId = "261506000517857281";
+const gozilineServerName = "261506000517857281"
+const hokkaidoRequestChanId = "736950456928043049";
+const hokkaidoChannelId = "727139450001293343";
+const hokkaidoServerName = "313374145683390465";
+const testChanId = "736649769715237037";
+const testPlayerChannelId = "736648836524671041";
+
 const cheerMessage = "ふぁいてぃ～～～～～～～～～～ん:partying_face: :partying_face: :partying_face: :partying_face:";
+
+let activePlayerList = [];
 
 bot.login(TOKEN);
 
@@ -122,6 +138,8 @@ bot.on("message", (msg) => {
     msg.channel.send("ゴジライン" + cheerMessage);
   } else if (msg.content.startsWith("rdy")) {
     msg.channel.send("fight");
+  } else if (msg.content.startsWith("!id")) {
+    msg.reply(msg.author.id);
   } else if (msg.content.startsWith("!team")) {
     if (msg.mentions.users.size) {
       const playerList = msg.mentions.users.map((user) => {
@@ -133,23 +151,22 @@ bot.on("message", (msg) => {
           "チームに偶数人いないと始まらないよ, botはカウントされません"
         );
       } else {
-        shuffleArray(playerList);
-        var teams = splitTeam(playerList);
-        if (teams.length == 0) {
-          msg.channel.send(
-            "そのメンバーでは近い実力のチーム分けができないよ、カス"
-          );
-        } else {
-          var output = generateTeamOutput(teams[0], teams[1]);
-          msg.channel.send(output[0]);
-          msg.channel.send(output[1]);
-        }
+        createRandomTeam(msg, playerList);
       }
     } else {
       msg.reply("チームに入れる人を指定してちょ");
     }
+  } else if (msg.content.startsWith("!game")) {
+    createRandomTeamUsingActiveUserList(msg);
+  } else if (msg.content.startsWith("!help")) {
+    showCommandList(msg);
   }
 });
+
+function playerData(id, username) {
+  this.id = id;
+  this.username = username;
+}
 
 function pickMyChara() {
   return characterList[Math.floor(Math.random() * characterList.length)];
@@ -182,7 +199,7 @@ function showMyKillGoal(playerId) {
 
 function splitTeam(playerList) {
   const scoreDiffThreshold = 2;
-  const maxRetryCount = 5;
+  const maxRetryCount = 10;
   var team1;
   var team2;
   var totalSize = playerList.length;
@@ -255,9 +272,32 @@ function getTeamScore(team) {
   return score;
 }
 
-function playerData(id, username) {
-  this.id = id;
-  this.username = username;
+function createRandomTeamUsingActiveUserList(msg) {
+  let channelId = msg.channel.id;
+  let activeChannelId;
+  if (channelId == hokkaidoRequestChanId) {
+    activeChannelId = hokkaidoChannelId;
+  } else if (channelId == gozilineRequestChanId) {
+    activeChannelId = gozilineChannelId;
+  } else if (channelId == testChanId) {
+    activeChannelId = testPlayerChannelId;
+  } else {
+    msg.channel.send("このチャンネルではそのコマンドは使えません。");
+    return;
+  }
+
+  bot.channels.fetch(activeChannelId)
+    .then(channel => {
+      activePlayerList = [];
+      channel.members.forEach(function(value, key) {
+        if (!playerBlackList.includes(value.user.id)) {
+          activePlayerList.push(
+            new playerData(value.user.id, value.user.username));
+        }
+      });
+      createRandomTeam(msg, activePlayerList);
+    })
+    .catch(console.error);
 }
 
 function shuffleArray(array) {
@@ -269,6 +309,41 @@ function shuffleArray(array) {
   }
 }
 
+function createRandomTeam(msg, playerList) {
+  shuffleArray(playerList);
+  var teams = splitTeam(playerList);
+  if (teams.length == 0) {
+    msg.channel.send(
+      "そのメンバーでは近い実力のチーム分けができないよ、カス"
+    );
+  } else {
+    console.log(teams);
+    var output = generateTeamOutput(teams[0], teams[1]);
+    msg.channel.send(output[0]);
+    msg.channel.send(output[1]);
+  }
+}
+
 function spMessage() {
   return "かみしろセージちゃんと壁張って";
+}
+
+function showCommandList(msg) {
+  var commandList = "=== VALORANTランダムボット使用可能コマンドリスト === \n\n";
+  commandList = commandList.concat("!chara: ランダムで使用キャラクターを選びます\n");
+  commandList = commandList.concat("!map: ランダムでマップを選びます\n");
+  commandList = commandList.concat("!score: あなたの戦闘力を表示します\n");
+  commandList = commandList.concat("!weapon: あなたはヴァンダル派？ファントム派？\n");
+  commandList = commandList.concat("!goal: 戦闘力に基づきランダムにキルカウント目標を返します\n");
+  commandList = commandList.concat("!tip: VALORANTに役立つ攻略情報をランダムに返します\n");
+  commandList = commandList.concat("!combo: chara+weapon+score+goal+tip\n");
+  commandList = commandList.concat("!team: @でチーム戦に入れるメンバーを指定し、ランダムでチームを生成します\n");
+  commandList = commandList.concat("!game: 現在ボイスチャンネルでアクティブになってるメンバーでランダムでチームを生成します\n");
+  commandList = commandList.concat("!f: " + cheerMessage + "\n");
+  commandList = commandList.concat("!gozi: ゴジライン\n");
+  commandList = commandList.concat("!suihan: 炊飯J\n");
+  commandList = commandList.concat("rdy: fight!\n");
+  commandList = commandList.concat("!help: このメッセージを表示します\n");
+
+  msg.channel.send(commandList);
 }
