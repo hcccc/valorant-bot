@@ -19,6 +19,11 @@ const characterList = [
 ];
 const mapList = ["アセント", "バインド", "スプリット", "ヘイヴン"];
 
+const weaponList = [
+  "クラシック", "ショーティー", "フレンジー", "ゴースト", "シェリフ", 
+  "スティンガー", "スペクター", "バッキー", "ジャッジ", "ブルドッグ", "ガーディアン", 
+  "ファントム", "ヴァンダル", "マーシャル", "オペレーター", "アレス", "オーディン"]; 
+
 const playerScoreMap = {
   "428565967199666178": 5, // ちろる
   "300561135277572096": 5, // とむら
@@ -105,8 +110,7 @@ bot.on("message", (msg) => {
   if (msg.content.startsWith("!chara")) {
     msg.reply(pickMyChara());
   } else if (msg.content.startsWith("!map")) {
-    var map = mapList[Math.floor(Math.random() * mapList.length)];
-    msg.reply(map);
+    msg.reply(pickMyMap());
   } else if (msg.content.startsWith("!score")) {
     msg.reply(showMyScore(msg.author.id));
   } else if (msg.content.startsWith("!weapon")) {
@@ -158,6 +162,7 @@ bot.on("message", (msg) => {
     }
   } else if (msg.content.startsWith("!game")) {
     createRandomTeamUsingActiveUserList(msg);
+    msg.channel.send("対戦マップ: " + pickMyMap());
   } else if (msg.content.startsWith("!help")) {
     showCommandList(msg);
   }
@@ -172,12 +177,12 @@ function pickMyChara() {
   return characterList[Math.floor(Math.random() * characterList.length)];
 }
 
+function pickMyMap() {
+  return mapList[Math.floor(Math.random() * mapList.length)];
+}
+
 function pickMyWeapon() {
-  if (Math.round(Math.random()) == 0) {
-    return "ヴァンダル";
-  } else {
-    return "ファントム";
-  }
+  return weaponList[Math.floor(Math.random() * weaponList.length)];
 }
 
 function getTip() {
