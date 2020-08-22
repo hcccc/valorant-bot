@@ -25,16 +25,16 @@ const weaponList = [
   "ファントム", "ヴァンダル", "マーシャル", "オペレーター", "アレス", "オーディン"]; 
 
 const playerScoreMap = {
-  "428565967199666178": 5, // ちろる
   "300561135277572096": 5, // とむら
   "275203657052585985": 4, // hanjiu
+  "428565967199666178": 4, // ちろる
   "313373642987798529": 4, // hokkaido
   "170858254660796417": 3, // totsu
   "311717648511795200": 2, // どりでん
   "242004702005297152": 2, // kamishiro
   "259716748901613568": 2, // sabunero
   "127041758239391744": 2, // calpis
-  "271670378584211458": 2, // hc
+  "271670378584211458": 20, // hc
   "319770578947014656": 2, // dori
   "344107555741761536": 2, // mito
   "185689334211543040": 2, // rosian
@@ -205,15 +205,18 @@ function showMyKillGoal(playerId) {
 function splitTeam(playerList) {
   const scoreDiffThreshold = 2;
   const maxRetryCount = 10;
-  var team1;
-  var team2;
+  var team1 = [];
+  var team2 = [];
+  var outputTeam1 = []; 
+  var outputTeam2 = [];
   var totalSize = playerList.length;
-  var teamScoreDiff = 999;
   var retryCount = 0;
+  var teamScoreDiff = 999;
+  var bestScoreDiff = 999;
 
-  while (teamScoreDiff > scoreDiffThreshold) {
+  while (teamScoreDiff != 0) {
     if (retryCount > maxRetryCount) {
-      return [];
+      break;
     }
 
     team1 = [];
@@ -232,10 +235,15 @@ function splitTeam(playerList) {
     }
 
     teamScoreDiff = Math.abs(getTeamScore(team1) - getTeamScore(team2));
+    if (teamScoreDiff < bestScoreDiff && teamScoreDiff <= scoreDiffThreshold) {
+      bestScoreDiff = teamScoreDiff;
+      outputTeam1 = team1.slice();
+      outputTeam2 = team2.slice();
+    }
     retryCount++;
   }
 
-  return [team1, team2];
+  return [outputTeam1, outputTeam2];
 }
 
 function generateTeamOutput(team1, team2) {
@@ -317,9 +325,9 @@ function shuffleArray(array) {
 function createRandomTeam(msg, playerList) {
   shuffleArray(playerList);
   var teams = splitTeam(playerList);
-  if (teams.length == 0) {
+  if (teams.length == 0 || (!teams[0].length && !teams[1].length)) {
     msg.channel.send(
-      "そのメンバーでは近い実力のチーム分けができないよ、カス"
+      "今のメンバーでは実力が近いチーム分けができないよ"
     );
   } else {
     console.log(teams);
