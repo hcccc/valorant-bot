@@ -16,8 +16,9 @@ const characterList = [
   "レイズ",
   "レイナ",
   "キルジョイ",
+  "スカイ",
 ];
-const mapList = ["アセント", "バインド", "スプリット", "ヘイヴン"];
+const mapList = ["アセント", "バインド", "スプリット", "ヘイヴン", "アイスボックス"];
 
 const weaponList = [
   "クラシック", "ショーティー", "フレンジー", "ゴースト", "シェリフ", 
@@ -30,6 +31,7 @@ const playerScoreMap = {
   "428565967199666178": 4, // ちろる
   "313373642987798529": 4, // hokkaido
   "170858254660796417": 3, // totsu
+  "189745200954998786": 3, // ばぐをる
   "311717648511795200": 2, // どりでん
   "242004702005297152": 2, // kamishiro
   "259716748901613568": 2, // sabunero
@@ -112,6 +114,8 @@ bot.on("message", (msg) => {
     msg.reply(pickMyChara());
   } else if (msg.content.startsWith("!map")) {
     msg.reply(pickMyMap());
+  } else if (msg.content.startsWith("!allmap")) {
+    msg.reply(mapList.toString());
   } else if (msg.content.startsWith("!score")) {
     msg.reply(showMyScore(msg.author.id));
   } else if (msg.content.startsWith("!weapon")) {
